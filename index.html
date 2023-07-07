@@ -1,0 +1,122 @@
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<link rel="stylesheet" type="text/css" href="vreme.css" media="screen" />
+	<script type="text/javascript">
+		var rainProbabilitiesData = initData();
+		var rainMapData = initRainMapData();
+
+		function initData() {
+			var currentHour = new Date();
+			currentHour.setMinutes(0);
+			currentHour.setSeconds(0);
+
+			return {
+				"currentHour": currentHour,
+				"currentHourRollbackCount": 0
+			}
+		}
+
+		function initRainMapData() {
+			var dto = initData();
+			setBestOffset(dto);
+			return dto;
+		}
+
+		function onLoad() {
+			var rainImg = document.getElementById("rain");
+			rainImg.addEventListener('click', function (event) {
+				var blurred = rainImg.classList.contains("blur");
+				if (!blurred) {
+				    var prev = event.pageX / this.clientWidth < 0.5;
+				    rainMapData.offset += (prev ? -3 : 3);
+				    var blur = false;
+				    if (rainMapData.offset < 3) {
+				    	rainMapData.offset = 72;
+				    	blur = true;
+				    }
+				    if (rainMapData.offset > 72) {
+				    	rainMapData.offset = 3;
+				    	blur = true;
+				    }
+				    if (blur) {
+				    	rainImg.classList.add("blur");
+				    	setTimeout(function() { rainImg.classList.remove("blur", rainMapData); }, 1000);
+				    }
+				    setRainMapSrc();
+				}
+			});
+			setRainMapSrc();
+			setProbabilitySrc();
+			setTimeout(function() { rollBaseDateIfRainUnavailable("rain", rainMapData, function() { setBestOffset(rainMapData); setRainMapSrc(); }); }, 100);
+			setTimeout(function() { rollBaseDateIfRainUnavailable("prob-NW", rainProbabilitiesData, setProbabilitySrc); }, 100);
+		}
+
+		function getBaseDate(currentHour) {
+			var baseDate = new Date();
+			baseDate.setTime(currentHour.getTime());
+			baseDate.setUTCHours(baseDate.getUTCHours() < 12 ? 0 : 12);
+			return baseDate;
+		}
+
+		function getBaseDateStr(currentHour) {
+			var yyyy = currentHour.getUTCFullYear();
+			var mm = currentHour.getUTCMonth() + 1;
+			var dd = currentHour.getUTCDate();
+			var h = currentHour.getUTCHours();
+
+			if (dd < 10) dd = '0' + dd;
+			if (mm < 10) mm = '0' + mm;
+
+			return "" + yyyy + mm + dd + "-" + (h < 12 ? "0000" : "1200");
+		}
+
+		function setBestOffset(dto) {
+			var hoursDiff = Math.ceil((new Date().getTime() - getBaseDate(dto.currentHour).getTime()) / 36e5);
+			dto.offset = hoursDiff + ((3 - (hoursDiff % 3)) % 3);
+			if (dto.offset < 3) {
+				dto.offset = 3;
+			} else if (dto.offset > 72) {
+				dto.offset = 72;
+			}
+		}
+
+		function setRainMapSrc() {
+			var offsetStr = "" + rainMapData.offset;
+			while (offsetStr.length < 3) {
+				offsetStr = "0" + offsetStr;
+			}
+			var url = "https://meteo.arso.gov.si/uploads/probase/www/model/aladin/field/as_" + getBaseDateStr(rainMapData.currentHour) + "_tcc-rr_si-neighbours_" + offsetStr + ".png";
+			document.getElementById("rain").src = url;
+		}
+
+		function setProbabilitySrc() {
+			document.getElementById("prob-NW").src = "https://meteo.arso.gov.si/uploads/probase/www/model/ecmwf/ef_" + getBaseDateStr(rainProbabilitiesData.currentHour) + "_pp_SLOVENIA_NORTH-WEST_.png";
+			document.getElementById("prob-O").src = "https://meteo.arso.gov.si/uploads/probase/www/model/ecmwf/ef_" + getBaseDateStr(rainProbabilitiesData.currentHour) + "_pp_SLOVENIA_MIDDLE_.png";
+		}
+
+		function rollBaseDateIfRainUnavailable(elementId, configDto, repaintFun) {
+			var rainImg = document.getElementById(elementId);
+			if (rainImg.complete) {
+				if (rainImg.naturalHeight != 0) {
+					return;
+				}
+				if (configDto.currentHourRollbackCount++ > 5) {
+					return;
+				}
+				configDto.currentHour.setHours(configDto.currentHour.getHours() - 12);
+				repaintFun();
+			}
+			setTimeout(function() { rollBaseDateIfRainUnavailable(elementId, configDto, repaintFun); }, 100);
+		}
+
+	</script>
+</head>
+<body onload="onLoad()">
+	<img src="https://meteo.arso.gov.si/uploads/probase/www/observ/radar/si0-rm-anim.gif" /><br/>
+	<iframe id="forecast" src="https://meteo.arso.gov.si/uploads/probase/www/fproduct/text/sl/fcast_si_text.html" title="forecast" style="width:100%; height:40em;"></iframe> <br/>
+	<img id="prob-NW"/><br/>
+	<img id="prob-O" /><br/>
+	<img id="rain"/><br/>
+</body>
+</html>

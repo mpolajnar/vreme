@@ -1,0 +1,7 @@
+img {
+	width: 100%;
+}
+
+img.blur {
+	filter: blur(30px);
+}
