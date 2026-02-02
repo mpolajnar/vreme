@@ -50,6 +50,7 @@
 			setProbabilitySrc();
 			setTimeout(function() { rollBaseDateIfRainUnavailable("rain", rainMapData, function() { setBestOffset(rainMapData); setRainMapSrc(); }); }, 100);
 			setTimeout(function() { rollBaseDateIfRainUnavailable("prob-NW", rainProbabilitiesData, setProbabilitySrc); }, 100);
+			loadTextForecast();
 		}
 
 		function getBaseDate(currentHour) {
@@ -110,13 +111,19 @@
 			setTimeout(function() { rollBaseDateIfRainUnavailable(elementId, configDto, repaintFun); }, 100);
 		}
 
+		function loadTextForecast() {
+			fetch('/meteo')
+  				.then(r => r.text())
+  				.then(html => document.getElementById('text').innerHTML = html);
+		}
+
 	</script>
 </head>
 <body onload="onLoad()">
-	<img src="https://meteo.arso.gov.si/uploads/probase/www/observ/radar/si0-rm-anim.gif" /><br/>
-	<iframe id="forecast" src="https://meteo.arso.gov.si/uploads/probase/www/fproduct/text/sl/fcast_si_text.html" title="forecast" style="width:100%; height:40em;"></iframe> <br/>
+	<img id="radar" src="https://meteo.arso.gov.si/uploads/probase/www/observ/radar/si0-rm-anim.gif" /><br/>
 	<img id="prob-NW"/><br/>
 	<img id="prob-O" /><br/>
 	<img id="rain"/><br/>
+	<div id="text"/><br/>
 </body>
 </html>
