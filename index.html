@@ -112,7 +112,7 @@
 		}
 
 		function loadTextForecast() {
-			fetch('/meteo')
+			fetch('meteo')
   				.then(r => r.text())
   				.then(html => document.getElementById('text').innerHTML = html);
 		}
