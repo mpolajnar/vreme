@@ -5,3 +5,9 @@ img {
 img.blur {
 	filter: blur(30px);
 }
+
+@media (max-width: 768px) {
+	table.vsebina p {
+		font-size: 1em;
+	}
+}
