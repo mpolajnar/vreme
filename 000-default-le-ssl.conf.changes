@@ -1,0 +1,2 @@
+ProxyPass "/vreme/meteo"  "http://localhost:80/vreme/meteo"
+ProxyPassReverse "/vreme/meteo"  "http://localhost:80/vreme/meteo"
